@@ -1,0 +1,414 @@
+<?php 
+$this->load->view('template/head');
+?>
+
+<?php
+$this->load->view('template/topbar');
+$this->load->view('template/sidebar');
+?>
+<!--tambahkan custom css disini-->
+  
+ <!--------------------------------------------------------------------------------------->
+ <!--------------------------------------------------------------------------------------->
+ <!-- Main content -->
+ 
+    <section class="content">
+        <div class="row">
+        <div class="col-xs-12">
+        
+          <div class="box">
+                <div class="box-header">
+                <?php $this->load->view("admin/_partials/breadcrumb.php") ?>
+				<h5><b><center>DAFTAR  PESANAN TERTUNDA
+				<?php 
+					$query = $this->db->query('select * from lini where  lini_id in (7,8,9)')->result();
+					print_r( $query);
+				?>
+
+				</center></b></h5>
+  				<br>
+				<!----------------------------------------------->
+				<div class="col-md-12">
+			  	<div class="card-header">
+						<a href="<?php echo site_url('admin/Pending_order/input_pending') ?>"><i class="fas fa-plus"></i> <b>Add New</b><p></a>
+				</div>
+				
+				<!----------------------------------------------->
+				<!----------------------------------------------->
+				<!-- DataTables -->
+				<div class="card mb-3">
+					
+					<div class="card-body">
+
+						<div class="table-responsive table-condensed">
+                   		<table class="table table-sm table-hover" id="example" width="100%" cellspacing="0">
+								<thead>
+									<tr  class="input-sm" >
+									    <th>No</th>
+										<th>KdProyek</th>
+										<th>Tanggal</th>
+										<th>No Transaksi</th>
+                                       <th>Nama Pelanggan</th>
+										<th>Plu</th>
+										<th>Nama Produk</th>
+										<th>Qty</th>
+										<th>Satuan</th>																																						
+										<th>No PO</th>
+										<th>Keterangan</th>
+										<th>Status</th>
+										<th>Nama Pengguna</th> 
+										<th>Tgl Estimasi </th>  
+                                        <th>Action</th>
+									</tr>
+									</thead>
+								<tbody>
+                                <?php 
+								$sql="Select
+										invorder_ppn.kdproyek,invorder_ppn.Transaction_date, invorder_ppn.TransactionInv_Id, invorder_ppn.Plu,
+										invorder_ppn.Product_name, invorder_ppn.Qty, invorder_ppn.Satuan,
+										customer.customer_name, invorder_ppn.no_po, invorder_ppn.keterangan,invorder_ppn.tgl_estimasi,
+										if(invorder_ppn.status=0,'Pending','Close') as statuse,invorder_ppn.user_id as username
+										From invorder_ppn
+										Inner Join customer ON invorder_ppn.customer_id = customer.customer_id 
+										left join userfile on userfile.user_id = invorder_ppn.user_id
+										where status = 0";
+
+								$query = $this->db->query($sql)->result();
+									$no = 1;
+							        foreach($query as $u){ 
+                                    ?>
+								    <tr  class="input-sm" >
+										<td><?php echo $no++ ?></td>
+										<td><?php echo $u->kdproyek ?></td>
+										<!-- <td><?php echo date('d/m/Y',strtotime($u->transaction_Date)) ?></td> -->
+										<td><?php echo date("d/m/Y", strtotime($u->Transaction_date)) ?></td>
+										<!-- <td><?php echo $u->Transaction_date ?></td> -->
+										<td><?php echo $u->TransactionInv_Id ?></td>  
+										<td><?php echo $u->customer_name ?></td> 
+										<td><?php echo $u->Plu ?></td> 
+										<td><?php echo $u->Product_name ?></td> 
+										<td align="right"><?php echo $qtyx = number_format($u->Qty,0,",",",") ?></td> 											
+										<td><?php echo $u->Satuan ?></td> 										
+										<td><?php echo $u->no_po ?></td>
+										<td><?php echo $u->keterangan ?></td>
+										<td><?php echo $u->statuse ?></td>
+										<td><?php echo $u->username ?></td> 
+										<td> 
+											<?php 
+											$result = str_replace('"', '',$u->Product_name);
+											?>
+                                             	<!-- Button trigger modal -->
+											<?php if($u->tgl_estimasi == null){?>	
+												<button onclick="show_modal('<?=$u->TransactionInv_Id?>','<?=$u->customer_name?>','<?=$u->Plu?>','<?=$result?>','<?= $qtyx?>','<?=$u->username?>')" 
+												   type="button" class="btn btn-primary btn-xs" data-toggle="modal" >
+												Tgl Estimasi
+												</button>
+										    <?php } ?>		
+
+												<?php echo $u->tgl_estimasi ?>
+										</td>  
+                                        <td>
+										     <a href="<?php echo site_url('admin/pending_order/tampil_close_po/'.$u->TransactionInv_Id) ?>"
+											 <?php if($this->session->userdata('user_name')=='PURCHASING' or $this->session->userdata('user_name')=='CSOTGR' or $this->session->userdata('user_name')=='ADMIN'
+                               or $this->session->userdata('user_name')=='ARIF'   or $this->session->userdata('user_name')=='SRI' or $this->session->userdata('user_id')=='CSO004' or $this->session->userdata('user_name')=='SHINTIA'){
+											 }else{	 
+                                                echo 'disabled';     
+                                             }?>											 
+											 class="btn btn-xs btn-primary"><i class="fas fa-edit"></i> Close</a>    
+											 
+											 <!-- <a href="<?php echo site_url('admin/pending_order/tampil_close_po/'.$u->TransactionInv_Id) ?>"
+											 <?php if($this->session->userdata('user_name')=='ADMIN'){
+											 }else{	 
+                                                echo 'disabled';     
+                                             }?>
+											 class="btn btn-xs btn-primary"><i class="fas fa-edit"></i> Close</a>     -->
+
+											 <a style="display:none;" href="<?php echo site_url('admin/pending_order/hapus_po/'.$u->TransactionInv_Id) ?>"
+											 <?php if($u->username==$this->session->userdata('user_id') or $this->session->userdata('user_name')=='ADMIN' or   $this->session->userdata('user_name')=='PURCHASING'){
+											 }else{	 
+                                                echo 'disabled';     
+                                             }?>
+											 class="btn btn-xs btn-danger"><i class="fas fa-remove"></i> Hapus</a>    
+										</td>
+									</tr>    										
+							        <?php } ?>
+									</tbody>
+								
+							</table>
+
+
+					 
+
+
+							<!-- Modal -->
+							<div class="modal " id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+							<div class="modal-dialog">
+								<div class="modal-content">
+								<div class="modal-header">
+									<h5 hidden class="modal-title" id="exampleModalLabel">Modal title</h5>
+									<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+									<span aria-hidden="true">&times;</span>
+									</button>
+								</div>
+								<div class="modal-body">
+										<input  type="hidden"  class="form-control" id="e_id" value="">
+
+										<form>
+										<div class="form-group row">
+											<label for="staticEmail" class="col-sm-4 col-form-label">No Transaksi </label>
+											<div class="col-sm-8">
+											<input type="test"  readonly class="form-control" id="val_a" >
+											</div>
+										</div>
+
+										<div class="form-group row">
+											<label for="staticEmail" class="col-sm-4 col-form-label">Nama Pelanggan  </label>
+											<div class="col-sm-8">
+											<input type="text"  readonly class="form-control" id="val_b" >
+											</div>
+										</div>
+										<div class="form-group row">
+											<label for="staticEmail" class="col-sm-4 col-form-label">Plu   </label>
+											<div class="col-sm-8">
+											<input type="text"  readonly class="form-control" id="val_c" >
+											</div>
+										</div>
+
+										<div class="form-group row">
+											<label for="staticEmail" class="col-sm-4 col-form-label">Nama Produk  </label>
+											<div class="col-sm-8">
+											<input type="text"  readonly class="form-control" id="val_d" >
+											</div>
+										</div>
+
+										<div class="form-group row">
+											<label for="staticEmail" class="col-sm-4 col-form-label">Qty   </label>
+											<div class="col-sm-8">
+											<input type="text"  readonly class="form-control" id="val_e" >
+											</div>
+										</div>
+
+										<div class="form-group row">
+											<label for="staticEmail" class="col-sm-4 col-form-label">Nama Pengguna  </label>
+											<div class="col-sm-8">
+											<input type="text"  readonly class="form-control" id="val_f" >
+											</div>
+										</div>
+
+										<div class="form-group row">
+											<label for="staticEmail" class="col-sm-4 col-form-label">Tgl Estimasi</label>
+											<div class="col-sm-8">
+											<input type="date"  class="form-control" id="tgl_estimasi" >
+											</div>
+										</div>
+										
+										</form>
+
+									
+								</div>
+								<div class="modal-footer">
+									<button style="display:none;" type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+									<button id="save_date" onclick="save_date()" type="button" class="btn btn-primary">Save </button>
+								</div>
+								</div>
+							</div>
+							</div>
+
+
+      </div>
+    </div>
+  </div>
+</div>
+
+
+						</div>
+					</div>
+				</div>
+
+                </div>
+			</div>
+				<!----------------------------------------------->
+
+				<!----------------------------------------------->
+				<!----------------------------------------------->
+            <!-- </div>/.box-body -->
+          </div>
+          <!-- /.box -->
+        </div>
+        <!-- /.col -->
+      </div>
+      <!-- /.row -->
+    </section>
+    <!-- /.content -->
+    <!-- /.content-wrapper -->
+    <!--------------------------------------------------------------------------------------->
+    <!--------------------------------------------------------------------------------------->
+
+
+
+<?php 
+$this->load->view('template/js');
+?>
+<script src="<?php echo base_url('assets/bower_components/bootstrap-datepicker/dist/js/bootstrap-datepicker.min.js')?>"></script>
+<!--tambahkan custom js disini--> 
+
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+<link href="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/8.11.8/sweetalert2.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/8.11.8/sweetalert2.min.js"></script>
+    
+<script type="text/javascript">
+	$(document).ready(function() {
+    $('#example').DataTable( {   		     
+		scrollX: true,
+	    scrollCollapse: true,
+		dom: 'Bfrtip',
+		pageLength:15,
+    } );	
+	} );
+
+	let site_url = '<?=site_url()?>'; 
+
+	function deleteConfirm(url){
+		$('#btn-delete').attr('href', url);
+		$('#deleteModal').modal();
+	}
+
+	let show_modal = async (id,val_b,val_c,val_d,val_e,val_f) => {
+		const result = val_d.replace(/"/g, '');
+		console.log(id)
+		$('#e_id').val(id);
+		$('#val_a').val(id);
+		$('#val_b').val(val_b);
+		$('#val_c').val(val_c);
+		$('#val_d').val(result);
+		$('#val_e').val(val_e);
+		$('#val_f').val(val_f);
+
+		$('#exampleModal').modal('show')
+	}
+
+
+  let save_date = async () => {
+	$('#save_date').prop('disabled', true).text('Loading ...');
+
+	 let id = $('#e_id').val();
+	 let tgl_estimasi = $('#tgl_estimasi').val();
+
+	 if(tgl_estimasi == ''){
+		alert('Mohon isi Tgl Estimasi ...')
+		$('#save_date').prop('disabled', false).text('Save');
+	 }
+	 else{
+		let url = site_url+'/admin/Pending_order/save_date';
+		let form_data = new FormData();
+            form_data.append('id', id);
+            form_data.append('tgl_estimasi', tgl_estimasi);
+
+		axios.post(url,form_data)
+                .then(function(res){
+                    // alert(res.data)
+                    console.log(res.data)
+                   
+
+                    if(res.data == 1){
+                        Swal.fire({
+                            title: 'Success Save Data ... ',
+                            type: "success",
+                            confirmButtonText: 'Ok',
+                            confirmButtonColor: "#46b654",
+                        }).then((result) => {
+                            location.reload(true);
+                        })
+                    }
+                    else{
+                        Swal.fire({
+                            title: 'Failed Save Data ... ',
+                            type: "error",
+                            confirmButtonText: 'Ok',
+                            confirmButtonColor: "#46b654",
+                        })
+						$('#save_date').prop('disabled', false).text('Save');
+                    }
+
+                })
+				.catch(function(error){
+                      alert('erorr try again')
+					  $('#save_date').prop('disabled', false).text('Save');
+                  }) 
+
+	 }
+  }
+	</script>
+
+<?php
+$this->load->view('template/foot');
+?>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
